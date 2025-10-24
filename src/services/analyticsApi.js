@@ -254,8 +254,35 @@ class AnalyticsAPI {
     params.append('current_period', currentPeriod);
     params.append('compare_to', compareTo);
     params.append('metrics', JSON.stringify(['all']));
-    
+
     return this.request(`/analytics/compare?${params.toString()}`, {
+      method: 'GET',
+    });
+  }
+
+  // User Growth Analytics (for the 4 dashboard charts)
+  async getUserGrowth(metricType, startDate, endDate, groupBy = 'day') {
+    const params = new URLSearchParams();
+    params.append('metric_type', metricType);
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    params.append('group_by', groupBy);
+
+    return this.request(`/analytics/users/growth?${params.toString()}`, {
+      method: 'GET',
+    });
+  }
+
+  // User Info for Export
+  async getUserInfo() {
+    return this.request('/query/user_info_xqwad', {
+      method: 'GET',
+    });
+  }
+
+  // Alternative: Try direct endpoint without /query prefix
+  async getUserInfoDirect() {
+    return this.request('/user_info_xqwad', {
       method: 'GET',
     });
   }

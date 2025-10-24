@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test User Info Export</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        button {
+            background: #3b82f6;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #2563eb;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .success { color: green; }
+        .error { color: red; }
+    </style>
+</head>
+<body>
+    <h1>Test User Info Export Endpoint</h1>
+
+    <div class="test-section">
+        <h2>Test Endpoints</h2>
+        <p>Click the buttons below to test which endpoint path works:</p>
+
+        <button onclick="testEndpoint('/query/user_info_xqwad')">
+            Test: /query/user_info_xqwad
+        </button>
+
+        <button onclick="testEndpoint('/user_info_xqwad')">
+            Test: /user_info_xqwad
+        </button>
+
+        <button onclick="testEndpoint('/api/user_info_xqwad')">
+            Test: /api/user_info_xqwad
+        </button>
+    </div>
+
+    <div class="test-section">
+        <h2>Results:</h2>
+        <div id="results"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>Response Data:</h2>
+        <pre id="response-data">No data yet - click a button above to test</pre>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'https://app.ezquotepro.com/api:7P7UmHjg';
+
+        async function testEndpoint(endpoint) {
+            const resultsDiv = document.getElementById('results');
+            const responseDataDiv = document.getElementById('response-data');
+
+            resultsDiv.innerHTML = `<p>Testing: ${endpoint}...</p>`;
+            responseDataDiv.textContent = 'Loading...';
+
+            // Get token from localStorage
+            const token = localStorage.getItem('ezquote_token');
+
+            if (!token) {
+                resultsDiv.innerHTML = '<p class="error">❌ No auth token found in localStorage. Please log in first.</p>';
+                responseDataDiv.textContent = 'No token found';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+
+                const status = response.status;
+                const statusText = response.statusText;
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    resultsDiv.innerHTML = `
+                        <p class="success">✅ SUCCESS! Endpoint works: ${endpoint}</p>
+                        <p>Status: ${status} ${statusText}</p>
+                        <p>Records returned: ${Array.isArray(data) ? data.length : (data.data ? data.data.length : 'Unknown')}</p>
+                    `;
+
+                    responseDataDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultsDiv.innerHTML = `
+                        <p class="error">❌ FAILED: ${endpoint}</p>
+                        <p>Status: ${status} ${statusText}</p>
+                    `;
+
+                    const errorText = await response.text();
+                    responseDataDiv.textContent = errorText || 'No error details';
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <p class="error">❌ ERROR: ${error.message}</p>
+                `;
+                responseDataDiv.textContent = error.stack || error.message;
+            }
+        }
+
+        // Check for token on load
+        window.addEventListener('load', () => {
+            const token = localStorage.getItem('ezquote_token');
+            if (!token) {
+                document.getElementById('results').innerHTML =
+                    '<p class="error">⚠️ No authentication token found. Please log in to the main app first, then return to this page.</p>';
+            } else {
+                document.getElementById('results').innerHTML =
+                    '<p class="success">✅ Authentication token found. Click a button above to test endpoints.</p>';
+            }
+        });
+    </script>
+</body>
+</html>
